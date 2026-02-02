@@ -1,0 +1,199 @@
+/**
+ * Debug样式文件
+ * 用于开发环境的布局可视化调试
+ *
+ * 使用方式：<link rel="stylesheet" href="tools/debug.css">
+ * 上线前务必移除此文件引用
+ */
+
+/* ============================================
+   Debug模式开关
+   ============================================ */
+:root {
+  --debug-mode: 1; /* 1=开启, 0=关闭 */
+}
+
+/* ============================================
+   布局区块颜色定义
+   ============================================ */
+[data-debug="layout"],
+body.debug-mode {
+  --header-bg: rgba(255, 107, 107, 0.3);    /* 🔴 红色 - Header */
+  --sidebar-bg: rgba(78, 205, 196, 0.3);    /* 🟢 青色 - Sidebar */
+  --main-bg: rgba(69, 183, 209, 0.3);       /* 🔵 蓝色 - Main */
+  --footer-bg: rgba(150, 206, 180, 0.3);    /* 🟢 绿色 - Footer */
+  --component-bg: rgba(255, 238, 173, 0.3); /* 🟡 黄色 - 组件 */
+  --nested-bg: rgba(200, 150, 255, 0.3);    /* 🟣 紫色 - 嵌套容器 */
+  --grid-bg: rgba(255, 150, 150, 0.2);      /* 🔴 浅红 - 网格 */
+}
+
+/* ============================================
+   Debug信息标注
+   ============================================ */
+
+/* 确保标注元素有定位上下文 */
+[data-debug] {
+  position: relative;
+}
+
+/* 主要信息标注（左上角） */
+[data-debug]::before {
+  content: attr(data-debug) " | " attr(data-layout);
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 10px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 0 0 4px 0;
+  z-index: 9999;
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  white-space: nowrap;
+  pointer-events: none;
+  line-height: 1.4;
+}
+
+/* 响应式信息标注（左下角） */
+[data-responsive]::after {
+  content: "📱 " attr(data-responsive);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  font-size: 10px;
+  background: rgba(230, 126, 34, 0.95);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 0 4px 0 0;
+  z-index: 9999;
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  white-space: nowrap;
+  pointer-events: none;
+  line-height: 1.4;
+}
+
+/* 组件信息标注 */
+[data-component]::before {
+  content: "🧩 " attr(data-component) " | " attr(data-variant, "") " | " attr(data-size, "");
+  position: absolute;
+  top: -20px;
+  left: 0;
+  font-size: 10px;
+  background: rgba(52, 73, 94, 0.95);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 3px;
+  z-index: 9999;
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ============================================
+   断点指示器
+   ============================================ */
+body.debug-mode::after,
+[data-debug="layout"]::after {
+  content: "📱 XS (<640px)";
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background: #e74c3c;
+  color: white;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  border-radius: 6px;
+  z-index: 99999;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  body.debug-mode::after,
+  [data-debug="layout"]::after {
+    content: "📱 SM (640-767px)";
+    background: #e67e22;
+  }
+}
+
+@media (min-width: 768px) {
+  body.debug-mode::after,
+  [data-debug="layout"]::after {
+    content: "📱 MD (768-1023px)";
+    background: #f39c12;
+  }
+}
+
+@media (min-width: 1024px) {
+  body.debug-mode::after,
+  [data-debug="layout"]::after {
+    content: "💻 LG (1024-1279px)";
+    background: #27ae60;
+  }
+}
+
+@media (min-width: 1280px) {
+  body.debug-mode::after,
+  [data-debug="layout"]::after {
+    content: "🖥️ XL (1280-1535px)";
+    background: #3498db;
+  }
+}
+
+@media (min-width: 1536px) {
+  body.debug-mode::after,
+  [data-debug="layout"]::after {
+    content: "🖥️ 2XL (≥1536px)";
+    background: #9b59b6;
+  }
+}
+
+/* ============================================
+   网格辅助线
+   ============================================ */
+.debug-grid {
+  background-image:
+    linear-gradient(rgba(255, 0, 0, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.1) 1px, transparent 1px);
+  background-size: 8px 8px; /* 8px网格 */
+}
+
+.debug-grid-16 {
+  background-image:
+    linear-gradient(rgba(0, 0, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 255, 0.1) 1px, transparent 1px);
+  background-size: 16px 16px; /* 16px网格 */
+}
+
+/* ============================================
+   元素边界高亮
+   ============================================ */
+.debug-outline * {
+  outline: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+.debug-outline *:hover {
+  outline: 2px solid rgba(255, 0, 0, 0.8);
+}
+
+/* ============================================
+   间距可视化
+   ============================================ */
+.debug-spacing [class*="p-"],
+.debug-spacing [class*="m-"] {
+  background: rgba(0, 255, 0, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(0, 255, 0, 0.3);
+}
+
+/* ============================================
+   隐藏Debug模式（通过CSS变量控制）
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  [data-debug]::before,
+  [data-debug]::after,
+  [data-responsive]::after,
+  [data-component]::before {
+    display: none;
+  }
+}
