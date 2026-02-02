@@ -7,14 +7,395 @@
 ```
 搭建骨架 → 布局实现 → 样式填充 → 组件封装 → 交互实现
     ↓          ↓          ↓          ↓          ↓
-  HTML结构   Debug可视化  设计还原    一致性检查   状态完整
+  组件结构   Debug可视化  设计还原    一致性检查   状态完整
 ```
 
 ---
 
 ## 3.1 搭建骨架
 
-### 语义化HTML结构
+> ⚠️ 根据阶段二确定的技术栈选择对应的实现方式
+
+### 🎯 选择对应技术栈的骨架模板
+
+根据项目技术规划，选择对应的骨架实现：
+
+| 技术栈 | 骨架实现方式 |
+|--------|-------------|
+| React | 函数组件 + JSX |
+| Vue 3 | 组合式 API + SFC |
+| Next.js | App Router / Pages Router |
+| Nuxt 3 | 约定式路由 + layouts |
+| 原生 | 语义化 HTML |
+
+---
+
+### React 骨架模板
+
+#### 布局组件 `src/layouts/MainLayout.tsx`
+
+```tsx
+// src/layouts/MainLayout.tsx
+import { ReactNode } from 'react';
+import styles from './MainLayout.module.css';
+
+// Debug 工具 - 仅开发环境
+const isDev = process.env.NODE_ENV === 'development';
+
+interface DebugProps {
+  name: string;
+  layout?: string;
+  responsive?: string;
+  color: string;
+  children: ReactNode;
+}
+
+// Debug 包装组件
+const DebugBox = ({ name, layout, responsive, color, children }: DebugProps) => {
+  if (!isDev) return <>{children}</>;
+
+  return (
+    <div
+      data-debug={name}
+      data-layout={layout}
+      data-responsive={responsive}
+      style={{ background: color, position: 'relative' }}
+    >
+      {children}
+    </div>
+  );
+};
+
+interface MainLayoutProps {
+  children: ReactNode;
+}
+
+export default function MainLayout({ children }: MainLayoutProps) {
+  return (
+    <div className={styles.layout} data-debug={isDev ? 'layout' : undefined}>
+
+      <DebugBox
+        name="Header"
+        layout="h:60px | fixed | top:0 | z:300"
+        color="rgba(255, 107, 107, 0.3)"
+      >
+        <header className={styles.header}>
+          {/* Header 内容 */}
+        </header>
+      </DebugBox>
+
+      <DebugBox
+        name="Sidebar"
+        layout="w:240px | fixed | left:0"
+        responsive="<1024px:w:60px | <768px:hidden"
+        color="rgba(78, 205, 196, 0.3)"
+      >
+        <aside className={styles.sidebar}>
+          {/* Sidebar 内容 */}
+        </aside>
+      </DebugBox>
+
+      <DebugBox
+        name="Main"
+        layout="ml:240px | mt:60px | p:24px"
+        responsive="<1024px:ml:60px | <768px:ml:0"
+        color="rgba(69, 183, 209, 0.3)"
+      >
+        <main className={styles.main}>
+          <div className={styles.container}>
+            {children}
+          </div>
+        </main>
+      </DebugBox>
+
+      <DebugBox
+        name="Footer"
+        layout="ml:240px | p:24px"
+        color="rgba(150, 206, 180, 0.3)"
+      >
+        <footer className={styles.footer}>
+          {/* Footer 内容 */}
+        </footer>
+      </DebugBox>
+
+    </div>
+  );
+}
+```
+
+#### 布局样式 `src/layouts/MainLayout.module.css`
+
+```css
+/* src/layouts/MainLayout.module.css */
+
+.layout {
+  min-height: 100vh;
+}
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height, 60px);
+  z-index: var(--z-fixed, 300);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-6);
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: var(--header-height, 60px);
+  bottom: 0;
+  width: var(--sidebar-width, 240px);
+  background: var(--white);
+  border-right: 1px solid var(--gray-200);
+  overflow-y: auto;
+}
+
+.main {
+  margin-left: var(--sidebar-width, 240px);
+  margin-top: var(--header-height, 60px);
+  min-height: calc(100vh - var(--header-height, 60px));
+  padding: var(--space-6);
+}
+
+.container {
+  max-width: var(--content-max-width, 1200px);
+  margin: 0 auto;
+}
+
+.footer {
+  margin-left: var(--sidebar-width, 240px);
+  padding: var(--space-6);
+  border-top: 1px solid var(--gray-200);
+}
+
+/* 响应式 */
+@media (max-width: 1023px) {
+  .sidebar {
+    width: var(--sidebar-width-collapsed, 60px);
+  }
+  .main,
+  .footer {
+    margin-left: var(--sidebar-width-collapsed, 60px);
+  }
+}
+
+@media (max-width: 767px) {
+  .sidebar {
+    display: none;
+  }
+  .main,
+  .footer {
+    margin-left: 0;
+  }
+}
+```
+
+---
+
+### Vue 3 骨架模板
+
+#### 布局组件 `src/layouts/MainLayout.vue`
+
+```vue
+<!-- src/layouts/MainLayout.vue -->
+<template>
+  <div class="layout" :data-debug="isDev ? 'layout' : undefined">
+
+    <!-- Header -->
+    <DebugBox
+      name="Header"
+      layout="h:60px | fixed | top:0 | z:300"
+      color="rgba(255, 107, 107, 0.3)"
+    >
+      <header class="header">
+        <!-- Header 内容 -->
+        <slot name="header" />
+      </header>
+    </DebugBox>
+
+    <!-- Sidebar -->
+    <DebugBox
+      name="Sidebar"
+      layout="w:240px | fixed | left:0"
+      responsive="<1024px:w:60px | <768px:hidden"
+      color="rgba(78, 205, 196, 0.3)"
+    >
+      <aside class="sidebar">
+        <!-- Sidebar 内容 -->
+        <slot name="sidebar" />
+      </aside>
+    </DebugBox>
+
+    <!-- Main -->
+    <DebugBox
+      name="Main"
+      layout="ml:240px | mt:60px | p:24px"
+      responsive="<1024px:ml:60px | <768px:ml:0"
+      color="rgba(69, 183, 209, 0.3)"
+    >
+      <main class="main">
+        <div class="container">
+          <slot />
+        </div>
+      </main>
+    </DebugBox>
+
+    <!-- Footer -->
+    <DebugBox
+      name="Footer"
+      layout="ml:240px | p:24px"
+      color="rgba(150, 206, 180, 0.3)"
+    >
+      <footer class="footer">
+        <slot name="footer" />
+      </footer>
+    </DebugBox>
+
+  </div>
+</template>
+
+<script setup lang="ts">
+import DebugBox from '@/components/debug/DebugBox.vue';
+
+const isDev = import.meta.env.DEV;
+</script>
+
+<style scoped>
+.layout {
+  min-height: 100vh;
+}
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height, 60px);
+  z-index: var(--z-fixed, 300);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-6);
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: var(--header-height, 60px);
+  bottom: 0;
+  width: var(--sidebar-width, 240px);
+  background: var(--white);
+  border-right: 1px solid var(--gray-200);
+  overflow-y: auto;
+}
+
+.main {
+  margin-left: var(--sidebar-width, 240px);
+  margin-top: var(--header-height, 60px);
+  min-height: calc(100vh - var(--header-height, 60px));
+  padding: var(--space-6);
+}
+
+.container {
+  max-width: var(--content-max-width, 1200px);
+  margin: 0 auto;
+}
+
+.footer {
+  margin-left: var(--sidebar-width, 240px);
+  padding: var(--space-6);
+  border-top: 1px solid var(--gray-200);
+}
+
+/* 响应式 */
+@media (max-width: 1023px) {
+  .sidebar {
+    width: var(--sidebar-width-collapsed, 60px);
+  }
+  .main,
+  .footer {
+    margin-left: var(--sidebar-width-collapsed, 60px);
+  }
+}
+
+@media (max-width: 767px) {
+  .sidebar {
+    display: none;
+  }
+  .main,
+  .footer {
+    margin-left: 0;
+  }
+}
+</style>
+```
+
+#### Debug组件 `src/components/debug/DebugBox.vue`
+
+```vue
+<!-- src/components/debug/DebugBox.vue -->
+<template>
+  <div
+    v-if="isDev"
+    :data-debug="name"
+    :data-layout="layout"
+    :data-responsive="responsive"
+    :style="{ background: color, position: 'relative' }"
+  >
+    <slot />
+  </div>
+  <slot v-else />
+</template>
+
+<script setup lang="ts">
+defineProps<{
+  name: string;
+  layout?: string;
+  responsive?: string;
+  color: string;
+}>();
+
+const isDev = import.meta.env.DEV;
+</script>
+```
+
+---
+
+### Next.js 骨架模板 (App Router)
+
+#### 布局组件 `src/app/layout.tsx`
+
+```tsx
+// src/app/layout.tsx
+import './globals.css';
+import MainLayout from '@/layouts/MainLayout';
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="zh-CN">
+      <body>
+        <MainLayout>{children}</MainLayout>
+      </body>
+    </html>
+  );
+}
+```
+
+---
+
+### 原生 HTML 骨架模板
 
 ```html
 <!DOCTYPE html>
@@ -23,36 +404,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>项目名称</title>
-
-  <!-- 样式 -->
   <link rel="stylesheet" href="styles/variables.css">
-  <link rel="stylesheet" href="styles/reset.css">
   <link rel="stylesheet" href="styles/global.css">
-
-  <!-- 开发环境：Debug样式 -->
+  <!-- 开发环境 -->
   <link rel="stylesheet" href="tools/debug.css">
 </head>
-<body>
-
-  <header>
-    <!-- 页头 -->
+<body data-debug="layout">
+  <header data-debug="Header" data-layout="h:60px | fixed">
+    <!-- Header -->
   </header>
-
-  <aside>
-    <!-- 侧边栏 -->
+  <aside data-debug="Sidebar" data-layout="w:240px | fixed">
+    <!-- Sidebar -->
   </aside>
-
-  <main>
-    <article>
-      <!-- 主要内容 -->
-    </article>
+  <main data-debug="Main" data-layout="ml:240px | mt:60px">
+    <!-- Main -->
   </main>
-
-  <footer>
-    <!-- 页脚 -->
+  <footer data-debug="Footer" data-layout="ml:240px">
+    <!-- Footer -->
   </footer>
-
-  <!-- 开发环境：Debug脚本 -->
   <script src="tools/debug-mode.js"></script>
 </body>
 </html>
@@ -64,59 +433,45 @@
 
 ### 🎯 核心：用不同背景色区分布局区块
 
-开发布局时，通过彩色背景让布局结构一目了然：
+无论使用哪种技术栈，都通过 Debug 组件实现彩色背景可视化：
 
-```html
-<body data-debug="layout">
+| 区块 | 颜色 | RGBA |
+|------|------|------|
+| Header | 🔴 红色 | rgba(255, 107, 107, 0.3) |
+| Sidebar | 🟢 青色 | rgba(78, 205, 196, 0.3) |
+| Main | 🔵 蓝色 | rgba(69, 183, 209, 0.3) |
+| Container | 🟣 紫色 | rgba(200, 150, 255, 0.3) |
+| Component | 🟡 黄色 | rgba(255, 238, 173, 0.3) |
+| Footer | 🟢 绿色 | rgba(150, 206, 180, 0.3) |
 
-  <header
-    data-debug="Header"
-    data-layout="h:60px | fixed | top:0 | z:300"
-    style="background: rgba(255, 107, 107, 0.3);">
-    <!-- 🔴 红色 -->
-  </header>
+### 可视化效果示意
 
-  <aside
-    data-debug="Sidebar"
-    data-layout="w:240px | fixed | left:0"
-    data-responsive="<1024px:w:60px | <768px:hidden"
-    style="background: rgba(78, 205, 196, 0.3);">
-    <!-- 🟢 青色 -->
-  </aside>
-
-  <main
-    data-debug="Main"
-    data-layout="ml:240px | mt:60px | p:24px"
-    data-responsive="<1024px:ml:60px | <768px:ml:0"
-    style="background: rgba(69, 183, 209, 0.3);">
-    <!-- 🔵 蓝色 -->
-
-    <div
-      data-debug="Container"
-      data-layout="max-w:1200px | mx:auto"
-      style="background: rgba(200, 150, 255, 0.3);">
-      <!-- 🟣 紫色 -->
-
-      <section
-        data-debug="Cards"
-        data-layout="grid | cols:3 | gap:24px"
-        data-responsive="<1024px:cols:2 | <768px:cols:1"
-        style="background: rgba(255, 238, 173, 0.3);">
-        <!-- 🟡 黄色 -->
-      </section>
-
-    </div>
-  </main>
-
-  <footer
-    data-debug="Footer"
-    data-layout="ml:240px | p:24px"
-    style="background: rgba(150, 206, 180, 0.3);">
-    <!-- 🟢 绿色 -->
-  </footer>
-
-</body>
 ```
+┌──────────────────────────────────────────────────────────────────┐
+│ [Header | h:60px | fixed | z:300]                    🔴 红色     │
+├────────────┬─────────────────────────────────────────────────────┤
+│ [Sidebar]  │  [Main | ml:240px | p:24px]             🔵 蓝色     │
+│ w:240px    │  ┌───────────────────────────────────────────────┐ │
+│ 🟢 青色    │  │ [Container | max-w:1200px]           🟣 紫色  │ │
+│            │  │  ┌─────────────────────────────────────────┐ │ │
+│ 📱响应式:  │  │  │ [Cards | grid:3 | gap:24px]    🟡 黄色  │ │ │
+│ <1024:60px │  │  │  ┌────┐  ┌────┐  ┌────┐              │ │ │
+│ <768:隐藏  │  │  │  │    │  │    │  │    │              │ │ │
+│            │  │  │  └────┘  └────┘  └────┘              │ │ │
+│            │  │  └─────────────────────────────────────────┘ │ │
+│            │  └───────────────────────────────────────────────┘ │
+├────────────┴─────────────────────────────────────────────────────┤
+│ [Footer | ml:240px]                                  🟢 绿色     │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### Debug 属性说明
+
+| 属性 | 用途 | 示例 |
+|------|------|------|
+| `data-debug` | 区块名称 | `"Header"`, `"Sidebar"` |
+| `data-layout` | 布局信息 | `"h:60px \| fixed \| z:300"` |
+| `data-responsive` | 响应式行为 | `"<1024px:w:60px \| <768px:hidden"` |
 
 ### 可视化效果
 
